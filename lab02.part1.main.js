@@ -10,14 +10,14 @@ const IPCIDR = require('ip-cidr');
  * Calculate and return the first host IP address from a CIDR subnet.
  * @param {string} cidrStr - The IPv4 subnet expressed
  *                 in CIDR format.
- * @return {object} Keys - ipv4 and ipv6
+ * @param {callback} callback - A callback function.
+ * @return {string} (firstIpAddress) - An IPv4 address.
  */
-function getFirstIpAddress(cidrStr) {
+function getFirstIpAddress(cidrStr, callback) {
 
   // Initialize return arguments for callback
   let firstIpAddress = null;
   let callbackError = null;
-
 
   // Instantiate an object from the imported class and assign the instance to variable cidr.
   const cidr = new IPCIDR(cidrStr);
@@ -42,14 +42,7 @@ function getFirstIpAddress(cidrStr) {
   // Node.js convention is to pass error data as the first argument to a callback.
   // The IAP convention is to pass returned data as the first argument and error
   // data as the second argument to the callback function.
-  //return callback(firstIpAddress, callbackError);
-
-  // check if we have an error 
-  if(callbackError){
-      console.log("Error returned from GET request: "+callbackError);
-      return {"ipv4":null,"ipv6":null};
-  }
-  return {"ipv4": firstIpAddress,"ipv6":getIpv4MappedIpv6Address(firstIpAddress)};
+  return callback(firstIpAddress, callbackError);
 }
 
 
@@ -117,10 +110,16 @@ function main() {
   // Iterate over sampleCidrs and pass the element's value to getFirstIpAddress().
   for (let i = 0; i < sampleCidrsLen; i++) {
     console.log(`\n--- Test Number ${i + 1} getFirstIpAddress(${sampleCidrs[i]}) ---`);
-    // Call getFirstIpAddress and pass the test subnet
-    // The response will always have a key 'ipv4'. If this key's value is null, then we have an error
-
-    console.log("Response returned from GET request: ",getFirstIpAddress(sampleCidrs[i]));
+    // Call getFirstIpAddress and pass the test subnet and an anonymous callback function.
+    // The callback is using the fat arrow operator: () => { }
+    getFirstIpAddress(sampleCidrs[i], (data, error) => {
+      // Now we are inside the callback function.
+      // Display the results on the console.
+      if (error) {
+        console.error(`  Error returned from GET request: ${error}`);
+      }
+      console.log(`  Response returned from GET request: ${data}`);
+    });
   }
   // Iterate over sampleIpv4s and pass the element's value to getIpv4MappedIpv6Address().
   for (let i = 0; i < sampleIpv4sLen; i++) {
